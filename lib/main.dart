@@ -34,15 +34,16 @@ class _BlankPageState extends State<BlankPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(msg)),
           );
+          
           if (connected) {
-            //Logica para subir base de datos
+            //Logica para subir base de datos          
           }
         }
       });
     });
   }
 
-//Funcion para mostrar el rating bar                         <------------------------------------------ (Arreglar forma)
+//Funcion para mostrar el rating bar
 void _mostrarRatingDialog(BuildContext context) {
   showDialog(
     context: context,
