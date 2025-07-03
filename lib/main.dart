@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/internet_checked.dart';
-import 'widgets/rating_app.dart';
 import 'data/bank_questions.dart';
+import 'pages/config_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +27,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _connected = false;
+  bool _loggedIn = false;
 
   @override
   void initState() {
@@ -51,9 +52,47 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  void _toggleLogin() {
+    setState(() {
+      _loggedIn = !_loggedIn;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            const DrawerHeader(
+              child: Text('Opciones'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Configuración'),
+              onTap: () {
+                Navigator.pop(context); 
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ConfigPage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: const Text('Cuestionario Bancario'),
+        actions: [
+          TextButton(
+            onPressed: _toggleLogin,
+            child: Text(
+              _loggedIn ? 'Desloguear' : 'Loguear',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
       body: Center(
         child: ElevatedButton(
           child: const Text('Iniciar Cuestionario'),
@@ -85,6 +124,16 @@ class _QuizPageState extends State<QuizPage> {
   int currentQuestion = 0;
   List<int?> selectedAnswers = List.filled(bankQuestions.length, null);
 
+  DateTime? _startTime;
+  DateTime? _endTime;
+  Duration? _totalTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now(); // Guarda la hora de inicio al entrar
+  }
+
   void _next() {
     if (selectedAnswers[currentQuestion] == null) return;
     if (currentQuestion < bankQuestions.length - 1) {
@@ -92,13 +141,27 @@ class _QuizPageState extends State<QuizPage> {
         currentQuestion++;
       });
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RatingScreen(
-            answers: selectedAnswers,
-            connected: widget.connected,
+      _endTime = DateTime.now(); // Guarda la hora de finalización
+      _totalTime = _endTime!.difference(_startTime!); // Calcula el tiempo total
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('¡Cuestionario finalizado!'),
+          content: Text(
+            'Gracias por completar el cuestionario.\n'
+            'Hora de inicio: ${_startTime!.toLocal()}\n'
+            'Hora de fin: ${_endTime!.toLocal()}\n'
+            'Tiempo total: ${_totalTime!.inMinutes} min ${_totalTime!.inSeconds % 60} seg',
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text('Volver al inicio'),
+            )
+          ],
         ),
       );
     }
@@ -140,67 +203,6 @@ class _QuizPageState extends State<QuizPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class RatingScreen extends StatefulWidget {
-  final List<int?> answers;
-  final bool connected;
-  const RatingScreen({super.key, required this.answers, required this.connected});
-
-  @override
-  State<RatingScreen> createState() => _RatingScreenState();
-}
-
-class _RatingScreenState extends State<RatingScreen> {
-  double? _rating;
-
-  void _onRatingChanged(double rating) {
-    setState(() {
-      _rating = rating;
-    });
-
-    // --- Lógica para guardar en base de datos local ---
-    // TODO: Guardar widget.answers y _rating en base de datos local aquí
-
-    // --- Lógica para enviar si hay conexión ---
-    if (widget.connected) {
-      // TODO: Enviar datos a servidor o base de datos remota aquí
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => WillPopScope(
-        onWillPop: () async => false,
-        child: AlertDialog(
-          title: const Text('¡Gracias!'),
-          content: Text('Tus respuestas y calificación han sido guardadas.\n'
-              'Rating: ${_rating?.toStringAsFixed(1) ?? ''} estrellas'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-              child: const Text('Cerrar'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Califica la app')),
-      body: Center(
-        child: StarRating(
-          initialRating: 4.0,
-          onRatingChanged: _onRatingChanged,
         ),
       ),
     );

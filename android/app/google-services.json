@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "499080617263",
+    "project_id": "assertys-questions",
+    "storage_bucket": "assertys-questions.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:499080617263:android:2905768a13a8aef76f55da",
+        "android_client_info": {
+          "package_name": "com.assertys.bancoescucha"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB51F7ATl6BqQPxJ9fZSM5LJVtNtzb5upk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
