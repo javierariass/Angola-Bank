@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:499080617263:android:2905768a13a8aef76f55da",
+        "mobilesdk_app_id": "1:499080617263:android:5413f787cff894016f55da",
         "android_client_info": {
-          "package_name": "com.assertys.bancoescucha"
+          "package_name": "com.assertys.koleta"
         }
       },
       "oauth_client": [],

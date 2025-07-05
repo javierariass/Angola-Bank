@@ -1,9 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'services/internet_checked.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'data/bank_questions.dart';
 import 'pages/config_page.dart';
+import 'services/firebase_service.dart';
 
-void main() {
+// GlobalKey para mostrar diálogos desde cualquier parte
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -12,8 +20,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomePage(),
+    return MaterialApp(
+      navigatorKey: rootNavigatorKey,
+      home: const HomePage(),
     );
   }
 }
@@ -26,29 +35,30 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _connected = false;
   bool _loggedIn = false;
+  late final StreamSubscription<ConnectivityResult> _connSub;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      initConnectivityListener((msg, connected) {
-        if (mounted) {
-          setState(() {
-            _connected = connected;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg)),
-          );
-        }
-      });
+    _connSub = Connectivity().onConnectivityChanged.listen((result) async {
+      if (result != ConnectivityResult.none) {
+        final ok = await tryUploadPendingResults();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok
+                ? '¡Datos sincronizados automáticamente!'
+                : 'Algunos datos no se pudieron sincronizar. Se intentará de nuevo cuando haya conexión.'),
+          ),
+        );
+      }
     });
   }
 
   @override
   void dispose() {
-    disposeConnectivityListener();
+    _connSub.cancel();
     super.dispose();
   }
 
@@ -71,11 +81,37 @@ class _HomePageState extends State<HomePage> {
               leading: const Icon(Icons.settings),
               title: const Text('Configuración'),
               onTap: () {
-                Navigator.pop(context); 
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const ConfigPage()),
                 );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.sync),
+              title: const Text('Sincronizar datos'),
+              onTap: () async {
+                Navigator.pop(context);
+                final connected = await Connectivity().checkConnectivity() != ConnectivityResult.none;
+                if (!mounted) return;
+                if (connected) {
+                  final ok = await tryUploadPendingResults();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(ok
+                          ? '¡Datos sincronizados correctamente!'
+                          : 'Algunos datos no se pudieron sincronizar. Se intentará de nuevo cuando haya conexión.'),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sin conexión. Los datos se subirán cuando exista conexión.'),
+                    ),
+                  );
+                }
               },
             ),
           ],
@@ -94,18 +130,47 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Center(
-        child: ElevatedButton(
-          child: const Text('Iniciar Cuestionario'),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => QuizPage(
-                  connected: _connected,
-                ),
-              ),
-            );
-          },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              child: const Text('Iniciar Cuestionario'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const QuizPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.sync),
+              label: const Text('Sincronizar datos'),
+              onPressed: () async {
+                final connected = await Connectivity().checkConnectivity() != ConnectivityResult.none;
+                if (!mounted) return;
+                if (connected) {
+                  final ok = await tryUploadPendingResults();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(ok
+                          ? '¡Datos sincronizados correctamente!'
+                          : 'Algunos datos no se pudieron sincronizar. Se intentará de nuevo cuando haya conexión.'),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sin conexión. Los datos se subirán cuando exista conexión.'),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -113,8 +178,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 class QuizPage extends StatefulWidget {
-  final bool connected;
-  const QuizPage({super.key, required this.connected});
+  const QuizPage({super.key});
 
   @override
   State<QuizPage> createState() => _QuizPageState();
@@ -131,7 +195,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   void initState() {
     super.initState();
-    _startTime = DateTime.now(); // Guarda la hora de inicio al entrar
+    _startTime = DateTime.now();
   }
 
   void _next() {
@@ -141,8 +205,8 @@ class _QuizPageState extends State<QuizPage> {
         currentQuestion++;
       });
     } else {
-      _endTime = DateTime.now(); // Guarda la hora de finalización
-      _totalTime = _endTime!.difference(_startTime!); // Calcula el tiempo total
+      _endTime = DateTime.now();
+      _totalTime = _endTime!.difference(_startTime!);
 
       showDialog(
         context: context,
@@ -150,14 +214,47 @@ class _QuizPageState extends State<QuizPage> {
           title: const Text('¡Cuestionario finalizado!'),
           content: Text(
             'Gracias por completar el cuestionario.\n'
-            'Hora de inicio: ${_startTime!.toLocal()}\n'
-            'Hora de fin: ${_endTime!.toLocal()}\n'
             'Tiempo total: ${_totalTime!.inMinutes} min ${_totalTime!.inSeconds % 60} seg',
           ),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                bool uploaded = true;
+                try {
+                  await uploadQuizResult(
+                    answers: selectedAnswers,
+                    startTime: _startTime!,
+                    endTime: _endTime!,
+                    totalTime: _totalTime!,
+                  ).timeout(const Duration(seconds: 2));
+                } catch (_) {
+                  uploaded = false;
+                }
+                if (!mounted) return;
                 Navigator.of(context).popUntil((route) => route.isFirst);
+                // Espera un frame para que el HomePage esté montado
+                await Future.delayed(const Duration(milliseconds: 100));
+                // Usa el context global del HomePage para mostrar el AlertDialog
+                final homeContext = rootNavigatorKey.currentState?.context;
+                if (homeContext != null) {
+                  showDialog(
+                    context: homeContext,
+                    builder: (_) => AlertDialog(
+                      title: Text(uploaded
+                          ? '¡Datos subidos correctamente!'
+                          : 'Sin conexión'),
+                      content: Text(uploaded
+                          ? 'Tus respuestas fueron guardadas en la nube.'
+                          : 'Los datos se subirán automáticamente cuando exista conexión.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(homeContext).pop(),
+                          child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
               },
               child: const Text('Volver al inicio'),
             )
