@@ -8,7 +8,7 @@ plugins {
 
 dependencies {
   // Import the Firebase BoM
-  implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+  implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
 
 
   // TODO: Add the dependencies for Firebase products you want to use
@@ -33,9 +33,8 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.assertys.koleta"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Para compatibilidad con Firebase Firestore, minSdk debe ser al menos 23
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

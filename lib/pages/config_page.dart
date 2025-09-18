@@ -6,13 +6,13 @@ class ConfigPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuración')),
+      appBar: AppBar(title: const Text('Configuração')),
       body: Center(
         child: ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          child: const Text('Regresar a principal'),
+          child: const Text('Voltar ao início'),
         ),
       ),
     );

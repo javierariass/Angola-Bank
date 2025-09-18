@@ -27,7 +27,7 @@ class _StarRatingState extends State<StarRating> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 220, 
+      width: 220,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -48,11 +48,11 @@ class _StarRatingState extends State<StarRating> {
                 _rating = rating;
               });
             },
-            updateOnDrag: false, 
+            updateOnDrag: false,
           ),
           const SizedBox(height: 10),
           Text(
-            'Rating: ${_rating.toStringAsFixed(1)} estrellas',
+            'Avaliação: ${_rating.toStringAsFixed(1)} estrelas',
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 10),
@@ -60,7 +60,7 @@ class _StarRatingState extends State<StarRating> {
             onPressed: () {
               widget.onRatingChanged(_rating);
             },
-            child: const Text('Calificar'),
+            child: const Text('Avaliar'),
           ),
         ],
       ),

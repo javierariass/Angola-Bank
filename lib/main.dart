@@ -1,8 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'data/bank_questions.dart';
+import 'pages/questionnaire_page.dart';
 import 'pages/config_page.dart';
 import 'services/firebase_service.dart';
 
@@ -75,11 +77,11 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           children: [
             const DrawerHeader(
-              child: Text('Opciones'),
+              child: Text('Opções'),
             ),
             ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('Configuración'),
+              title: const Text('Configuração'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -90,7 +92,7 @@ class _HomePageState extends State<HomePage> {
             ),
             ListTile(
               leading: const Icon(Icons.sync),
-              title: const Text('Sincronizar datos'),
+              title: const Text('Sincronizar dados'),
               onTap: () async {
                 Navigator.pop(context);
                 final connected = await Connectivity().checkConnectivity() != ConnectivityResult.none;
@@ -101,14 +103,14 @@ class _HomePageState extends State<HomePage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(ok
-                          ? '¡Datos sincronizados correctamente!'
-                          : 'Algunos datos no se pudieron sincronizar. Se intentará de nuevo cuando haya conexión.'),
+                          ? 'Dados sincronizados automaticamente!'
+                          : 'Alguns dados não puderam ser sincronizados. Será tentado novamente quando houver conexão.'),
                     ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Sin conexión. Los datos se subirán cuando exista conexión.'),
+                      content: Text('Sem conexão. Os dados serão enviados quando houver conexão.'),
                     ),
                   );
                 }
@@ -118,12 +120,12 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       appBar: AppBar(
-        title: const Text('Cuestionario Bancario'),
+        title: const Text('Questionário Bancário'),
         actions: [
           TextButton(
             onPressed: _toggleLogin,
             child: Text(
-              _loggedIn ? 'Desloguear' : 'Loguear',
+              _loggedIn ? 'Deslogar' : 'Logar',
               style: const TextStyle(color: Colors.white),
             ),
           ),
@@ -134,42 +136,16 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              child: const Text('Iniciar Cuestionario'),
+              child: const Text('Iniciar Questionário'),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const QuizPage(),
+                    builder: (_) => const QuestionnairePage(),
                   ),
                 );
               },
             ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.sync),
-              label: const Text('Sincronizar datos'),
-              onPressed: () async {
-                final connected = await Connectivity().checkConnectivity() != ConnectivityResult.none;
-                if (!mounted) return;
-                if (connected) {
-                  final ok = await tryUploadPendingResults();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(ok
-                          ? '¡Datos sincronizados correctamente!'
-                          : 'Algunos datos no se pudieron sincronizar. Se intentará de nuevo cuando haya conexión.'),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Sin conexión. Los datos se subirán cuando exista conexión.'),
-                    ),
-                  );
-                }
-              },
-            ),
           ],
         ),
       ),
@@ -177,131 +153,3 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class QuizPage extends StatefulWidget {
-  const QuizPage({super.key});
-
-  @override
-  State<QuizPage> createState() => _QuizPageState();
-}
-
-class _QuizPageState extends State<QuizPage> {
-  int currentQuestion = 0;
-  List<int?> selectedAnswers = List.filled(bankQuestions.length, null);
-
-  DateTime? _startTime;
-  DateTime? _endTime;
-  Duration? _totalTime;
-
-  @override
-  void initState() {
-    super.initState();
-    _startTime = DateTime.now();
-  }
-
-  void _next() {
-    if (selectedAnswers[currentQuestion] == null) return;
-    if (currentQuestion < bankQuestions.length - 1) {
-      setState(() {
-        currentQuestion++;
-      });
-    } else {
-      _endTime = DateTime.now();
-      _totalTime = _endTime!.difference(_startTime!);
-
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('¡Cuestionario finalizado!'),
-          content: Text(
-            'Gracias por completar el cuestionario.\n'
-            'Tiempo total: ${_totalTime!.inMinutes} min ${_totalTime!.inSeconds % 60} seg',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                bool uploaded = true;
-                try {
-                  await uploadQuizResult(
-                    answers: selectedAnswers,
-                    startTime: _startTime!,
-                    endTime: _endTime!,
-                    totalTime: _totalTime!,
-                  ).timeout(const Duration(seconds: 2));
-                } catch (_) {
-                  uploaded = false;
-                }
-                if (!mounted) return;
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                // Espera un frame para que el HomePage esté montado
-                await Future.delayed(const Duration(milliseconds: 100));
-                // Usa el context global del HomePage para mostrar el AlertDialog
-                final homeContext = rootNavigatorKey.currentState?.context;
-                if (homeContext != null) {
-                  showDialog(
-                    context: homeContext,
-                    builder: (_) => AlertDialog(
-                      title: Text(uploaded
-                          ? '¡Datos subidos correctamente!'
-                          : 'Sin conexión'),
-                      content: Text(uploaded
-                          ? 'Tus respuestas fueron guardadas en la nube.'
-                          : 'Los datos se subirán automáticamente cuando exista conexión.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(homeContext).pop(),
-                          child: const Text('Aceptar'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-              },
-              child: const Text('Volver al inicio'),
-            )
-          ],
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final question = bankQuestions[currentQuestion];
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pregunta ${currentQuestion + 1}/${bankQuestions.length}'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(question.question, style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 24),
-            ...List.generate(question.options.length, (i) {
-              return RadioListTile<int>(
-                title: Text(question.options[i]),
-                value: i,
-                groupValue: selectedAnswers[currentQuestion],
-                onChanged: (val) {
-                  setState(() {
-                    selectedAnswers[currentQuestion] = val;
-                  });
-                },
-              );
-            }),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: selectedAnswers[currentQuestion] != null ? _next : null,
-              child: Text(
-                currentQuestion == bankQuestions.length - 1
-                    ? 'Finalizar'
-                    : 'Siguiente',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

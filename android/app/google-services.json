@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "499080617263",
-    "project_id": "assertys-questions",
-    "storage_bucket": "assertys-questions.firebasestorage.app"
+    "project_number": "459315372820",
+    "project_id": "koleta-c7d2a",
+    "storage_bucket": "koleta-c7d2a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:499080617263:android:5413f787cff894016f55da",
+        "mobilesdk_app_id": "1:459315372820:android:729a9ae925bf68025bd801",
         "android_client_info": {
           "package_name": "com.assertys.koleta"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB51F7ATl6BqQPxJ9fZSM5LJVtNtzb5upk"
+          "current_key": "AIzaSyAtoxHoE34dMo8vtF28BPoCwtEo4hjcAfw"
         }
       ],
       "services": {

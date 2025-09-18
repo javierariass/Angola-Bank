@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 Future<void> uploadQuizResult({
-  required List<int?> answers,
+  required Map<String, dynamic> answers,
   required DateTime startTime,
   required DateTime endTime,
   required Duration totalTime,
