@@ -1,54 +1,119 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-
-import 'pages/config_page.dart';
 import 'pages/home_screen.dart';
 import 'pages/questionnaire_page.dart';
+import 'pages/config_page.dart';
+import 'pages/login_page.dart';
+import 'services/firebase_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  bool _showLogin = false;
+  String _loggedUser = '';
+  int _sessionQuizCount = 0;
+  bool _sessionDocCreated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _syncUsers();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _showLogin = true;
+      });
+    });
+  }
+
+  Future<void> _handleLogout() async {
+    // Sincronizar el registro local de la sesión actual si existe
+    if (_loggedUser.isNotEmpty && _sessionDocCreated) {
+      await trySyncLocalCurrentSessionDoc(_loggedUser);
+    }
+    setState(() {
+      _loggedUser = '';
+      _showLogin = true;
+      _sessionQuizCount = 0;
+      _sessionDocCreated = false;
+    });
+  }
+
+  Future<void> _syncUsers() async {
+    await Future.delayed(const Duration(seconds: 1));
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Questionário Bancário',
-      initialRoute: '/',
+      home: Stack(
+        children: [
+          const HomeScreen(),
+          if (_showLogin)
+            LoginPage(
+              onLoginSuccess: (username) {
+                setState(() {
+                  _loggedUser = username;
+                  _showLogin = false;
+                  _sessionQuizCount = 0;
+                  _sessionDocCreated = false;
+                });
+                // Crear documento de sesión al iniciar sesión
+                createSessionDoc(username).then((_) {
+                  setState(() {
+                    _sessionDocCreated = true;
+                  });
+                });
+              },
+            ),
+          if (!_showLogin && _loggedUser.isNotEmpty)
+            AppHomeWrapper(
+              onLogout: _handleLogout,
+              loggedUser: _loggedUser,
+            ),
+        ],
+      ),
       routes: {
-        '/': (context) => const HomeScreen(),
-        '/app_home': (context) => const AppHomeWrapper(),
-        '/questionnaire': (context) => const QuestionnairePage(),
+        '/app_home': (context) => AppHomeWrapper(
+          onLogout: _handleLogout,
+          loggedUser: _loggedUser,
+        ),
+        '/questionnaire': (context) => QuestionnairePage(
+          loggedUser: _loggedUser,
+          sessionQuizCount: _sessionQuizCount,
+          onSessionQuizCountChanged: (newCount) {
+            setState(() {
+              _sessionQuizCount = newCount;
+            });
+            // Actualizar el contador en el documento de sesión actual
+            if (_loggedUser.isNotEmpty && _sessionDocCreated) {
+              updateCurrentSessionQuizCount(_loggedUser, newCount);
+            }
+          },
+        ),
         '/config': (context) => const ConfigPage(),
       },
     );
   }
 }
 
-/// A thin wrapper that re-implements the original HomePage UI but keeps it
-/// simple and reachable via route `/app_home`. This avoids circular imports
-/// while preserving the functionality (drawer, sync, and navigation to
-/// questionnaire and config pages).
-class AppHomeWrapper extends StatefulWidget {
-  const AppHomeWrapper({super.key});
-
-  @override
-  State<AppHomeWrapper> createState() => _AppHomeWrapperState();
-}
-
-class _AppHomeWrapperState extends State<AppHomeWrapper> {
-  bool _loggedIn = false;
-
-  void _toggleLogin() {
-    setState(() {
-      _loggedIn = !_loggedIn;
-    });
-  }
+class AppHomeWrapper extends StatelessWidget {
+  final Future<void> Function() onLogout;
+  final String loggedUser;
+  const AppHomeWrapper({super.key, required this.onLogout, required this.loggedUser});
 
   @override
   Widget build(BuildContext context) {
@@ -70,13 +135,17 @@ class _AppHomeWrapperState extends State<AppHomeWrapper> {
               title: const Text('Sincronizar dados'),
               onTap: () async {
                 Navigator.pop(context);
-                // Try to call a service named tryUploadPendingResults if present.
-                // We avoid importing services/firebase_service.dart here to keep
-                // this file minimal. If that function is needed, consider
-                // refactoring into a separate helper file.
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Sincronização iniciada')),
                 );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Cerrar sesión'),
+              onTap: () async {
+                await onLogout();
+                Navigator.pop(context);
               },
             ),
           ],
@@ -85,12 +154,9 @@ class _AppHomeWrapperState extends State<AppHomeWrapper> {
       appBar: AppBar(
         title: const Text('Questionário Bancário'),
         actions: [
-          TextButton(
-            onPressed: _toggleLogin,
-            child: Text(
-              _loggedIn ? 'Deslogar' : 'Logar',
-              style: const TextStyle(color: Colors.white),
-            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Center(child: Text('Usuario: $loggedUser')),
           ),
         ],
       ),

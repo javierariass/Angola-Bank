@@ -3,7 +3,10 @@ import '../data/advanced_questions.dart';
 import '../services/firebase_service.dart';
 
 class QuestionnairePage extends StatefulWidget {
-	const QuestionnairePage({super.key});
+	final String loggedUser;
+	final int sessionQuizCount;
+	final Function(int newCount)? onSessionQuizCountChanged;
+	const QuestionnairePage({super.key, required this.loggedUser, required this.sessionQuizCount, this.onSessionQuizCountChanged});
 
 	@override
 	State<QuestionnairePage> createState() => _QuestionnairePageState();
@@ -14,11 +17,13 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 	DateTime? _startTime;
 	DateTime? _endTime;
 	Duration? _totalTime;
+	int _localSessionQuizCount = 0;
 
 	@override
 	void initState() {
 		super.initState();
 		_startTime = DateTime.now();
+		_localSessionQuizCount = widget.sessionQuizCount;
 	}
 
 	Map<String, dynamic> _formatAnswersForRow() {
@@ -54,6 +59,7 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 		_endTime = DateTime.now();
 		_totalTime = _endTime!.difference(_startTime!);
 		final row = _formatAnswersForRow();
+		row['user'] = widget.loggedUser;
 		bool uploaded = true;
 		try {
 			await uploadQuizResult(
@@ -77,7 +83,17 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 				),
 				actions: [
 					TextButton(
-						onPressed: () {
+						onPressed: () async {
+							// Sumar 1 al contador SOLO al volver al inicio
+							setState(() {
+								_localSessionQuizCount++;
+							});
+							if (widget.onSessionQuizCountChanged != null) {
+								widget.onSessionQuizCountChanged!(_localSessionQuizCount);
+							}
+							// Actualizar el contador en el documento de sesión actual
+							await updateCurrentSessionQuizCount(widget.loggedUser, _localSessionQuizCount);
+							// ignore: use_build_context_synchronously
 							Navigator.of(context).popUntil((route) => route.isFirst);
 						},
 						child: const Text('Voltar ao início'),
