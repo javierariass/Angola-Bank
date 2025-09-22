@@ -9,35 +9,47 @@ class HomeScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/fondo.jpg"), // tu imagen en assets
-            fit: BoxFit.cover, // hace que la imagen cubra toda la pantalla
+            image: AssetImage("assets/fondo.png"),
+            fit: BoxFit.cover,
           ),
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
+        child: Column(
+          children: [
+            // 🔹 Texto movido hacia arriba con padding
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Text(
                 "Welcome to Assertys",
-                style: TextStyle(
-                  color: const Color(0xFF84BD91),
-                  fontSize: 50,
+                style: const TextStyle(
+                  fontFamily: 'Roboto', //  aquí defines la fuente
+                  color: Color.fromARGB(255, 237, 239, 237),
+                  fontSize: 40,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF84BD91),
-                ),
-                onPressed: () {
-                  // Navegar a la parte principal de la app (mantener funcionalidad existente)
-                  Navigator.pushNamed(context, '/app_home');
-                },
-                child: const Text("Next"),
+            ),
+            // 🔹 Centrar el botón en el resto de la pantalla
+            Expanded(
+              child: Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.end, // empuja el botón hacia abajo
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // lo centra horizontalmente
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 233, 236, 233),
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/app_home');
+                    },
+                    child: const Text("Next"),
+                  ),
+                  SizedBox(height: 20), // separación desde el borde inferior
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
