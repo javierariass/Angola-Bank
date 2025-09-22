@@ -18,10 +18,10 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Bienvenido",
+                "Welcome to Assertys",
                 style: TextStyle(
                   color: const Color(0xFF84BD91),
-                  fontSize: 32,
+                  fontSize: 50,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -34,7 +34,7 @@ class HomeScreen extends StatelessWidget {
                   // Navegar a la parte principal de la app (mantener funcionalidad existente)
                   Navigator.pushNamed(context, '/app_home');
                 },
-                child: const Text("Entrar"),
+                child: const Text("Next"),
               ),
             ],
           ),
