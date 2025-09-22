@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/login_offline.dart';
+import '../services/firebase_service.dart';
 
 class LoginPage extends StatefulWidget {
   final Function(String username) onLoginSuccess;
@@ -19,13 +19,19 @@ class _LoginPageState extends State<LoginPage> {
     setState(() { _loading = true; _error = null; });
     final user = _userController.text.trim();
     final pass = _passController.text;
-    final ok = await login(user, pass);
+    final ok = await validateLocalUserLogin(user, pass);
     if (ok) {
       widget.onLoginSuccess(user);
     } else {
       setState(() { _error = "Usuario o contraseña incorrectos"; });
     }
     setState(() { _loading = false; });
+  }
+  @override
+  void initState() {
+    super.initState();
+    // Sincronizar usuarios locales al iniciar la app
+    syncLocalUsersWithFirestore();
   }
 
   @override

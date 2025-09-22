@@ -105,6 +105,34 @@ Future<void> saveSessionQuizCount(String user, int count) async {
   }
 }
 
+// Descarga la colección 'users' y la guarda localmente
+Future<void> downloadUsersToLocal() async {
+  final prefs = await SharedPreferences.getInstance();
+  try {
+    final snapshot = await FirebaseFirestore.instance.collection('users').get();
+    final users = snapshot.docs.map((doc) => {
+      'username': doc['username'],
+      'password': doc['password'],
+    }).toList();
+    await prefs.setString('local_users', jsonEncode(users));
+  } catch (_) {
+    // Si falla, no actualiza
+  }
+}
+
+// Valida login usando la lista local de usuarios
+Future<bool> validateLocalUserLogin(String username, String password) async {
+  final prefs = await SharedPreferences.getInstance();
+  final usersStr = prefs.getString('local_users');
+  if (usersStr == null) return false;
+  final List users = jsonDecode(usersStr);
+  return users.any((u) => u['username'] == username && u['password'] == password);
+}
+
+// Sincroniza la lista local de usuarios con Firestore
+Future<void> syncLocalUsersWithFirestore() async {
+  await downloadUsersToLocal();
+}
 Future<void> uploadQuizResult({
   required Map<String, dynamic> answers,
   required DateTime startTime,
