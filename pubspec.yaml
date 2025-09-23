@@ -29,7 +29,7 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/fondo.jpg
+    - assets/fondo.png
 
   uses-material-design: true
 

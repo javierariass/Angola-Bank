@@ -1,51 +1,61 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
+import '../services/firebase_service.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onNext;
+  const HomeScreen({super.key, this.onNext});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 17, 59, 12),
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage("assets/fondo.png"),
-            fit: BoxFit.cover,
+            fit: BoxFit.scaleDown,
           ),
         ),
         child: Column(
           children: [
-            // 🔹 Texto movido hacia arriba con padding
             Padding(
-              padding: const EdgeInsets.all(4.0),
+              padding: const EdgeInsets.all(7.0),
               child: Text(
                 "Welcome to Assertys",
                 style: const TextStyle(
-                  fontFamily: 'Roboto', //  aquí defines la fuente
-                  color: Color.fromARGB(255, 237, 239, 237),
+                  fontFamily: 'Roboto',
+                  color: Color.fromARGB(255, 251, 252, 251),
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            // 🔹 Centrar el botón en el resto de la pantalla
             Expanded(
               child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.end, // empuja el botón hacia abajo
-                crossAxisAlignment:
-                    CrossAxisAlignment.center, // lo centra horizontalmente
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 233, 236, 233),
+                      backgroundColor: Color.fromARGB(255, 245, 247, 245),
                     ),
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/app_home');
-                    },
+                    onPressed: () async {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => const Center(child: CircularProgressIndicator()),
+                        );
+                        try {
+                          await syncLocalUsersWithFirestore();
+                        } catch (_) {}
+                        Navigator.of(context).pop();
+                        if (onNext != null) onNext!();
+                      },
                     child: const Text("Next"),
                   ),
-                  SizedBox(height: 20), // separación desde el borde inferior
+                  SizedBox(height: 60),
                 ],
               ),
             ),

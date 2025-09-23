@@ -1,14 +1,16 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'pages/home_screen.dart';
 import 'pages/questionnaire_page.dart';
 import 'pages/config_page.dart';
 import 'pages/login_page.dart';
 import 'services/firebase_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -21,6 +23,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _showLogin = false;
+  bool _showHome = true;
   String _loggedUser = '';
   int _sessionQuizCount = 0;
   bool _sessionDocCreated = false;
@@ -30,11 +33,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _syncUsers();
-    Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        _showLogin = true;
-      });
-    });
   }
 
   Future<void> _handleLogout() async {
@@ -61,7 +59,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       title: 'Questionário Bancário',
       home: Stack(
         children: [
-          const HomeScreen(),
+          if (_showHome)
+            HomeScreen(
+              onNext: () {
+                setState(() {
+                  _showHome = false;
+                  _showLogin = true;
+                });
+              },
+            ),
           if (_showLogin)
             LoginPage(
               onLoginSuccess: (username) {
@@ -71,6 +77,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   _sessionQuizCount = 0;
                   _sessionDocCreated = false;
                 });
+                // Sincronizar cuestionarios pendientes tras login
+                tryUploadPendingResults();
                 // Crear documento de sesión al iniciar sesión
                 createSessionDoc(username).then((_) {
                   setState(() {
@@ -79,7 +87,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 });
               },
             ),
-          if (!_showLogin && _loggedUser.isNotEmpty)
+          if (!_showLogin && !_showHome && _loggedUser.isNotEmpty)
             AppHomeWrapper(
               onLogout: _handleLogout,
               loggedUser: _loggedUser,

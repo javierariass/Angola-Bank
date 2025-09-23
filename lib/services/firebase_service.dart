@@ -110,13 +110,18 @@ Future<void> downloadUsersToLocal() async {
   final prefs = await SharedPreferences.getInstance();
   try {
     final snapshot = await FirebaseFirestore.instance.collection('users').get();
-    final users = snapshot.docs.map((doc) => {
-      'username': doc['username'],
-      'password': doc['password'],
+    final users = snapshot.docs.map((doc) {
+      final username = (doc['username'] ?? '').toString().trim();
+      final password = (doc['password'] ?? '').toString().trim();
+      return {
+        'username': username,
+        'password': password,
+      };
     }).toList();
+    print('Usuarios descargados: $users');
     await prefs.setString('local_users', jsonEncode(users));
-  } catch (_) {
-    // Si falla, no actualiza
+  } catch (e) {
+    print('Error descargando usuarios: $e');
   }
 }
 
@@ -126,7 +131,14 @@ Future<bool> validateLocalUserLogin(String username, String password) async {
   final usersStr = prefs.getString('local_users');
   if (usersStr == null) return false;
   final List users = jsonDecode(usersStr);
-  return users.any((u) => u['username'] == username && u['password'] == password);
+  final inputUser = username.trim();
+  final inputPass = password.trim();
+  final found = users.any((u) =>
+    (u['username']?.toString().trim() == inputUser) &&
+    (u['password']?.toString().trim() == inputPass)
+  );
+  print('Login intent: usuario="$inputUser" pass="$inputPass" resultado=$found');
+  return found;
 }
 
 // Sincroniza la lista local de usuarios con Firestore
