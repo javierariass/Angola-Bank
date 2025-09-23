@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../services/firebase_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 🔹 Texto superior con sombra y fuente moderna
+            // 🔹 Texto superior con sombra
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Card(
@@ -49,19 +49,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text(
                     "Bem-vindo ao Assertys",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                      letterSpacing: 1.2,
-                      fontFamily: 'Arial', // estilo moderno sin Google Fonts
-                      shadows: [
-                        Shadow(
-                          offset: Offset(1.5, 1.5),
-                          blurRadius: 2.0,
-                          color: Colors.black26,
-                        ),
-                      ],
+                    style: GoogleFonts.poppins(
+                      textStyle: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        letterSpacing: 1.1,
+                      ),
                     ),
                   ),
                 ),
@@ -133,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const Text(
                       "Próximo",
                       style: TextStyle(
+                        fontFamily: 'Roboto',
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
