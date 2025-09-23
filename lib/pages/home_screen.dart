@@ -1,31 +1,75 @@
-// ignore_for_file: use_build_context_synchronously
-
+// ignore_for_file: use_build_
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../services/firebase_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final VoidCallback? onNext;
   const HomeScreen({super.key, this.onNext});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Ocultar status bar y navigation bar en modo inmersivo
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Ocultar la barra superior (status bar)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-    });
+    final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    final targetWidth =
+        (MediaQuery.of(context).size.width * devicePixelRatio).round();
+
     return Scaffold(
-  backgroundColor: Color.fromARGB(255, 30, 73, 27),
-      body: Container(
-        color: Color.fromARGB(255, 30, 73, 27),
-        width: double.infinity,
-        height: double.infinity,
+      backgroundColor: const Color.fromARGB(255, 30, 73, 27),
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // 🔹 Texto superior con sombra y fuente moderna
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Card(
+                elevation: 8,
+                shadowColor: Colors.black54,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                color: Colors.white.withOpacity(0.9),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  child: Text(
+                    "Bem-vindo ao Assertys",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black87,
+                      letterSpacing: 1.2,
+                      fontFamily: 'Arial', // estilo moderno sin Google Fonts
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1.5, 1.5),
+                          blurRadius: 2.0,
+                          color: Colors.black26,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 🔹 Logo central libre
             Expanded(
-              flex: 7,
               child: Center(
                 child: AspectRatio(
                   aspectRatio: 1,
@@ -34,59 +78,69 @@ class HomeScreen extends StatelessWidget {
                     child: Image.asset(
                       "assets/fondo.png",
                       fit: BoxFit.contain,
+                      cacheWidth: targetWidth,
+                      semanticLabel: "Logo de Assertys",
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+
+            // 🔹 Botón inferior con margen
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7.0),
-              child: Center(
-                child: Text(
-                  "Bem-vindo ao Assertys",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    color: Color.fromARGB(255, 251, 252, 251),
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 220,
-                    height: 60,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromARGB(255, 245, 247, 245),
-                        textStyle: const TextStyle(fontSize: 24),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.all(16.0),
+              child: FractionallySizedBox(
+                widthFactor: 0.7,
+                child: SizedBox(
+                  height: 60,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 245, 247, 245),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      onPressed: () async {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) => const Center(child: CircularProgressIndicator()),
-                        );
-                        try {
-                          await syncLocalUsersWithFirestore();
-                        } catch (_) {}
-                        Navigator.of(context).pop();
-                        if (onNext != null) onNext!();
-                      },
-                      child: const Text("Próximo"),
+                      elevation: 6,
+                      shadowColor: Colors.black45,
+                    ),
+                    onPressed: () async {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder:
+                            (_) => WillPopScope(
+                              onWillPop: () async => false,
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                      );
+                      try {
+                        await syncLocalUsersWithFirestore();
+                      } catch (e, st) {
+                        debugPrint("Error en sincronización: $e\n$st");
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Error ao sincronizar os dados."),
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) Navigator.of(context).pop();
+                      }
+                      widget.onNext?.call();
+                    },
+                    child: const Text(
+                      "Próximo",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 60),
-                ],
+                ),
               ),
             ),
           ],
