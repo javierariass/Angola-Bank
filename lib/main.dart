@@ -6,6 +6,7 @@ import 'pages/home_screen.dart';
 import 'pages/questionnaire_page.dart';
 import 'pages/login_page.dart';
 import 'services/firebase_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,6 +148,30 @@ class AppHomeWrapper extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Sincronização iniciada')),
                 );
+                // Sincronizar resultados pendientes
+                final ok = await tryUploadPendingResults();
+                // Sincronizar usuarios locales
+                await syncLocalUsersWithFirestore();
+                if (ok) {
+                  // Eliminar registros locales si la sincronización fue exitosa
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('pending_results');
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(ok ? 'Sincronização completa! Dados locais eliminados e usuários atualizados.' : 'Alguns dados não foram sincronizados.')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: const Text('Eliminar registros locais'),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('pending_results');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Registros locais eliminados!')),
+                );
+                Navigator.pop(context);
               },
             ),
             ListTile(
