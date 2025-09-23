@@ -105,87 +105,104 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 			}
 		}
 
-		Map<String, dynamic> _formatAnswersForRow() {
-			final Map<String, dynamic> row = {};
-			// Preguntas generales (no por banco)
-			for (final q in advancedQuestions) {
-				// Solo las preguntas que no son dinámicas por banco
-				if (["q09","q10","q12","q13","q14"].contains(q.id)) continue;
-				final val = answers[q.id];
-				if (val == null || (q.type == QuestionType.text && val.toString().isEmpty)) continue;
-				if (q.type == QuestionType.multipleChoice) {
-					row[q.id] = val;
-					if (q.allowOther && val is List && val.contains(q.options.length - 1)) {
-						final outroText = answers['${q.id}_Outro'];
-						if (outroText != null && outroText.toString().isNotEmpty) {
-							row['${q.id}_Outro'] = outroText;
+			Map<String, dynamic> _formatAnswersForRow() {
+				final Map<String, dynamic> row = {};
+				// Preguntas generales (no por banco)
+				for (final q in advancedQuestions) {
+					if (["q09","q10","q12","q13","q14"].contains(q.id)) continue;
+					final val = answers[q.id];
+					if (val == null || (q.type == QuestionType.text && val.toString().isEmpty)) continue;
+					if (q.type == QuestionType.multipleChoice) {
+						// Guardar los textos seleccionados
+						if (val is List) {
+							row[q.id] = val.map((i) => (i is int && i >= 0 && i < q.options.length) ? q.options[i] : i).toList();
+						} else {
+							row[q.id] = val;
 						}
-					}
-				} else if (q.type == QuestionType.singleChoice) {
-					row[q.id] = val;
-					if (q.allowOther && val == q.options.length - 1) {
-						final outroText = answers['${q.id}_Outro'];
-						if (outroText != null && outroText.toString().isNotEmpty) {
-							row['${q.id}_Outro'] = outroText;
+						if (q.allowOther && val is List && val.contains(q.options.length - 1)) {
+							final outroText = answers['${q.id}_Outro'];
+							if (outroText != null && outroText.toString().isNotEmpty) {
+								row['${q.id}_Outro'] = outroText;
+							}
 						}
+					} else if (q.type == QuestionType.singleChoice) {
+						// Guardar el texto seleccionado
+						if (val is int && val >= 0 && val < q.options.length) {
+							row[q.id] = q.options[val];
+						} else {
+							row[q.id] = val;
+						}
+						if (q.allowOther && val == q.options.length - 1) {
+							final outroText = answers['${q.id}_Outro'];
+							if (outroText != null && outroText.toString().isNotEmpty) {
+								row['${q.id}_Outro'] = outroText;
+							}
+						}
+					} else if (q.type == QuestionType.scale) {
+						row[q.id] = val;
+					} else if (q.type == QuestionType.text) {
+						row[q.id] = val;
 					}
-				} else if (q.type == QuestionType.scale) {
-					row[q.id] = val;
-				} else if (q.type == QuestionType.text) {
-					row[q.id] = val;
 				}
-			}
 
-			// Bancos seleccionados en q2
-			final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
-			final q2val = answers['q02'];
-			List<int> indices = (q2val is List) ? q2val.cast<int>() : <int>[];
-			List<String> bancosQ2 = [];
-			for (var i in indices) {
-				if (i >= 0 && i < q2.options.length) {
-					if (i == q2.options.length - 1) {
-						final outroText = answers['q02_Outro'];
-						if (outroText != null && outroText.toString().trim().isNotEmpty) {
-							bancosQ2.add(outroText.toString().trim());
+				// Bancos seleccionados en q2
+				final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
+				final q2val = answers['q02'];
+				List<int> indices = (q2val is List) ? q2val.cast<int>() : <int>[];
+				List<String> bancosQ2 = [];
+				for (var i in indices) {
+					if (i >= 0 && i < q2.options.length) {
+						if (i == q2.options.length - 1) {
+							final outroText = answers['q02_Outro'];
+							if (outroText != null && outroText.toString().trim().isNotEmpty) {
+								bancosQ2.add(outroText.toString().trim());
+							}
+						} else {
+							bancosQ2.add(q2.options[i]);
 						}
+					}
+				}
+
+				// Preguntas dinámicas agrupadas por banco
+				final Map<String, dynamic> bancos = {};
+				for (final banco in bancosQ2) {
+					final Map<String, dynamic> bancoAnswers = {};
+					// q09
+					final key09 = 'q09_$banco';
+					final val09 = answers[key09];
+					if (val09 is List) {
+						bancoAnswers['q09'] = val09.map((i) => (i is int && i >= 0 && i < advancedQuestions[8].options.length) ? advancedQuestions[8].options[i] : i).toList();
 					} else {
-						bancosQ2.add(q2.options[i]);
+						bancoAnswers['q09'] = val09 ?? [];
 					}
+					// q10
+					final key10 = 'q10_$banco';
+					final val10 = answers[key10];
+					if (val10 is List) {
+						bancoAnswers['q10'] = val10.map((i) => (i is int && i >= 0 && i < advancedQuestions[9].options.length) ? advancedQuestions[9].options[i] : i).toList();
+					} else {
+						bancoAnswers['q10'] = val10 ?? [];
+					}
+					// q12 (sentiment)
+					final key12pos = 'q12_${banco}_positivo';
+					final key12neg = 'q12_${banco}_negativo';
+					final key12txt = 'q12_${banco}_texto';
+					bancoAnswers['q12'] = {
+						'positivo': answers[key12pos] ?? 0,
+						'negativo': answers[key12neg] ?? 0,
+						'texto': answers[key12txt] ?? '',
+					};
+					// q13
+					final key13 = 'q13_$banco';
+					bancoAnswers['q13'] = answers[key13] ?? 0;
+					// q14
+					final key14 = 'q14_$banco';
+					bancoAnswers['q14'] = answers[key14] ?? '';
+					bancos[banco] = bancoAnswers;
 				}
+				row['bancos'] = bancos;
+				return row;
 			}
-
-			// Preguntas dinámicas agrupadas por banco
-			final Map<String, dynamic> bancos = {};
-			for (final banco in bancosQ2) {
-				final Map<String, dynamic> bancoAnswers = {};
-				// q09
-				final key09 = 'q09_$banco';
-				final val09 = answers[key09];
-				bancoAnswers['q09'] = val09 ?? [];
-				// q10
-				final key10 = 'q10_$banco';
-				final val10 = answers[key10];
-				bancoAnswers['q10'] = val10 ?? [];
-				// q12 (sentiment)
-				final key12pos = 'q12_${banco}_positivo';
-				final key12neg = 'q12_${banco}_negativo';
-				final key12txt = 'q12_${banco}_texto';
-				bancoAnswers['q12'] = {
-					'positivo': answers[key12pos] ?? 0,
-					'negativo': answers[key12neg] ?? 0,
-					'texto': answers[key12txt] ?? '',
-				};
-				// q13
-				final key13 = 'q13_$banco';
-				bancoAnswers['q13'] = answers[key13] ?? 0;
-				// q14
-				final key14 = 'q14_$banco';
-				bancoAnswers['q14'] = answers[key14] ?? '';
-				bancos[banco] = bancoAnswers;
-			}
-			row['bancos'] = bancos;
-			return row;
-		}
 
 	void _submit() async {
 			_endTime = DateTime.now();
@@ -341,14 +358,20 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 
 	List<dynamic> get _questionnairePages {
 		// Preguntas fijas: 1-8, 11, 15-19
-		List<dynamic> pages = [];
-		for (var i = 0; i < advancedQuestions.length; i++) {
-			if ([8,9,11,12,13,14].contains(i)) continue; // Saltar 9,10,12,13,14, se agregan dinámicamente
-			pages.add(advancedQuestions[i]);
-		}
-		// Insertar preguntas dinámicas después de la 8
-		pages.insertAll(8, _dynamicBankPages);
-		return pages;
+						List<dynamic> pages = [];
+						// Agregar preguntas fijas: 0-7 (q01-q08)
+						for (var i = 0; i <= 7; i++) {
+							pages.add(advancedQuestions[i]);
+						}
+						// Insertar preguntas dinámicas después de la 8
+						pages.addAll(_dynamicBankPages);
+						// Agregar pregunta fija q11 (índice 10)
+						pages.add(advancedQuestions[10]);
+						// Agregar preguntas fijas q15-q19 (índices 14-18)
+						for (var i = 14; i < advancedQuestions.length; i++) {
+							pages.add(advancedQuestions[i]);
+						}
+						return pages;
 	}
 
 	@override

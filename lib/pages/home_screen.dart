@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_
+// ignore_for_file: use_build_, use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
