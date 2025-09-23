@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(7.0),
               child: Text(
-                "Welcome to Assertys",
+                "Bem-vindo ao Assertys",
                 style: const TextStyle(
                   fontFamily: 'Roboto',
                   color: Color.fromARGB(255, 251, 252, 251),
@@ -53,7 +53,7 @@ class HomeScreen extends StatelessWidget {
                         Navigator.of(context).pop();
                         if (onNext != null) onNext!();
                       },
-                    child: const Text("Next"),
+                    child: const Text("Próximo"),
                   ),
                   SizedBox(height: 60),
                 ],

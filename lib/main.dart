@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'pages/home_screen.dart';
 import 'pages/questionnaire_page.dart';
-import 'pages/config_page.dart';
 import 'pages/login_page.dart';
 import 'services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // Sincronizar usuarios locales con Firestore antes de iniciar la app
+  await syncLocalUsersWithFirestore();
   runApp(const MyApp());
 }
 
@@ -56,7 +57,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Questionário Bancário',
+  title: 'Questionário Bancário',
       home: Stack(
         children: [
           if (_showHome)
@@ -77,9 +78,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   _sessionQuizCount = 0;
                   _sessionDocCreated = false;
                 });
-                // Sincronizar cuestionarios pendientes tras login
+                // Sincronizar resultados pendentes após login
                 tryUploadPendingResults();
-                // Crear documento de sesión al iniciar sesión
+                // Criar documento de sessão ao iniciar sessão
                 createSessionDoc(username).then((_) {
                   setState(() {
                     _sessionDocCreated = true;
@@ -112,7 +113,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             }
           },
         ),
-        '/config': (context) => const ConfigPage(),
       },
     );
   }
@@ -129,14 +129,15 @@ class AppHomeWrapper extends StatelessWidget {
       drawer: Drawer(
         child: ListView(
           children: [
-            const DrawerHeader(child: Text('Opções')),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Configuração'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/config');
-              },
+            DrawerHeader(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Opções', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 8),
+                  Text('Usuário: $loggedUser', style: const TextStyle(fontSize: 16)),
+                ],
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.sync),
@@ -150,7 +151,7 @@ class AppHomeWrapper extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.logout),
-              title: const Text('Cerrar sesión'),
+              title: const Text('Sair'),
               onTap: () async {
                 await onLogout();
                 Navigator.pop(context);
@@ -160,13 +161,7 @@ class AppHomeWrapper extends StatelessWidget {
         ),
       ),
       appBar: AppBar(
-        title: const Text('Questionário Bancário'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Center(child: Text('Usuario: $loggedUser')),
-          ),
-        ],
+  title: const Text('Questionário Bancário'),
       ),
       body: Center(
         child: Column(

@@ -122,122 +122,122 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 
        @override
        Widget build(BuildContext context) {
-	       // Opciones dinámicas para Q03
-	       List<String> bancosQ2 = [];
-	       final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
-	       if (answers['q02'] != null && answers['q02'] is List) {
-		       final indices = answers['q02'] as List;
-		       bancosQ2 = [for (var i in indices) if (i is int && i >= 0 && i < q2.options.length) q2.options[i]];
-		       if (!bancosQ2.contains('Outro')) bancosQ2.add('Outro');
-	       }
+       // Opções dinâmicas para Q03
+       List<String> bancosQ2 = [];
+       final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
+       if (answers['q02'] != null && answers['q02'] is List) {
+	       final indices = answers['q02'] as List;
+	       bancosQ2 = [for (var i in indices) if (i is int && i >= 0 && i < q2.options.length) q2.options[i]];
+	       if (!bancosQ2.contains('Outro')) bancosQ2.add('Outro');
+       }
 
-	       return Scaffold(
-		       appBar: AppBar(
-			       title: const Text('Questionário Bancário'),
-			       centerTitle: true,
-		       ),
-		       body: Padding(
-			       padding: const EdgeInsets.all(16),
-			       child: Column(
-				       children: [
-					       Expanded(
-						       child: PageView.builder(
-							       controller: _pageController,
-							       physics: const NeverScrollableScrollPhysics(),
-							       itemCount: advancedQuestions.length,
-							       onPageChanged: (i) {
-								       setState(() { _currentPage = i; });
-							       },
-							       itemBuilder: (context, index) {
-								       final q = advancedQuestions[index];
-								       Widget questionWidget;
-								       if (q.id == 'q03') {
-									       questionWidget = AdvancedQuestionWidget(
-										       question: AdvancedQuestion(
-											       id: q.id,
-											       question: q.question,
-											       type: q.type,
-											       options: bancosQ2,
-											       allowOther: true,
-										       ),
-										       answer: answers[q.id],
-										       onChanged: (val) {
-											       setState(() {
-												       answers[q.id] = val;
-											       });
-										       },
-									       );
-								       } else {
-									       questionWidget = AdvancedQuestionWidget(
-										       question: q,
-										       answer: answers[q.id],
-										       onChanged: (val) {
-											       setState(() {
-												       answers[q.id] = val;
-											       });
-										       },
-									       );
-								       }
-								       return SingleChildScrollView(
-									       child: Card(
-										       margin: const EdgeInsets.symmetric(vertical: 8),
-										       elevation: 4,
-										       child: Padding(
-											       padding: const EdgeInsets.all(18),
-											       child: Column(
-												       crossAxisAlignment: CrossAxisAlignment.stretch,
-												       children: [
-													       Text(
-														       'Pregunta ${index + 1} de ${advancedQuestions.length}',
-														       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-														       textAlign: TextAlign.right,
-													       ),
-													       const SizedBox(height: 10),
-													       questionWidget,
-												       ],
-											       ),
+       return Scaffold(
+	       appBar: AppBar(
+		       title: const Text('Questionário Bancário'),
+		       centerTitle: true,
+	       ),
+	       body: Padding(
+		       padding: const EdgeInsets.all(16),
+		       child: Column(
+			       children: [
+				       Expanded(
+					       child: PageView.builder(
+						       controller: _pageController,
+						       physics: const NeverScrollableScrollPhysics(),
+						       itemCount: advancedQuestions.length,
+						       onPageChanged: (i) {
+							       setState(() { _currentPage = i; });
+						       },
+						       itemBuilder: (context, index) {
+							       final q = advancedQuestions[index];
+							       Widget questionWidget;
+							       if (q.id == 'q03') {
+								       questionWidget = AdvancedQuestionWidget(
+									       question: AdvancedQuestion(
+										       id: q.id,
+										       question: q.question,
+										       type: q.type,
+										       options: bancosQ2,
+										       allowOther: true,
+									       ),
+									       answer: answers[q.id],
+									       onChanged: (val) {
+										       setState(() {
+											       answers[q.id] = val;
+										       });
+									       },
+								       );
+							       } else {
+								       questionWidget = AdvancedQuestionWidget(
+									       question: q,
+									       answer: answers[q.id],
+									       onChanged: (val) {
+										       setState(() {
+											       answers[q.id] = val;
+										       });
+									       },
+								       );
+							       }
+							       return SingleChildScrollView(
+								       child: Card(
+									       margin: const EdgeInsets.symmetric(vertical: 8),
+									       elevation: 4,
+									       child: Padding(
+										       padding: const EdgeInsets.all(18),
+										       child: Column(
+											       crossAxisAlignment: CrossAxisAlignment.stretch,
+											       children: [
+												       Text(
+													       'Pergunta ${index + 1} de ${advancedQuestions.length}',
+													       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+													       textAlign: TextAlign.right,
+												       ),
+												       const SizedBox(height: 10),
+												       questionWidget,
+											       ],
 										       ),
 									       ),
-								       );
-							       },
-						       ),
-					       ),
-					       const SizedBox(height: 16),
-					       Row(
-						       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-						       children: [
-							       if (_currentPage > 0)
-								       ElevatedButton.icon(
-									       onPressed: () {
-										       _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
-									       },
-									       icon: const Icon(Icons.arrow_back),
-									       label: const Text('Anterior'),
 								       ),
-							       if (_currentPage < advancedQuestions.length - 1)
-								       ElevatedButton.icon(
-									       onPressed: () {
-										       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
-									       },
-									       icon: const Icon(Icons.arrow_forward),
-									       label: const Text('Siguiente'),
-								       ),
-							       if (_currentPage == advancedQuestions.length - 1)
-								       ElevatedButton(
-									       onPressed: _allAnswered() ? _submit : null,
-									       child: const Text('Finalizar'),
-								       ),
-						       ],
+							       );
+						       },
 					       ),
-					       const SizedBox(height: 8),
-					       LinearProgressIndicator(
-						       value: (_currentPage + 1) / advancedQuestions.length,
-						       minHeight: 6,
-					       ),
-				       ],
-			       ),
+				       ),
+				       const SizedBox(height: 16),
+				       Row(
+					       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+					       children: [
+						       if (_currentPage > 0)
+							       ElevatedButton.icon(
+								       onPressed: () {
+									       _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
+								       },
+								       icon: const Icon(Icons.arrow_back),
+								       label: const Text('Anterior'),
+							       ),
+						       if (_currentPage < advancedQuestions.length - 1)
+							       ElevatedButton.icon(
+								       onPressed: () {
+									       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.ease);
+								       },
+								       icon: const Icon(Icons.arrow_forward),
+								       label: const Text('Próxima'),
+							       ),
+						       if (_currentPage == advancedQuestions.length - 1)
+							       ElevatedButton(
+								       onPressed: _allAnswered() ? _submit : null,
+								       child: const Text('Finalizar'),
+							       ),
+					       ],
+				       ),
+				       const SizedBox(height: 8),
+				       LinearProgressIndicator(
+					       value: (_currentPage + 1) / advancedQuestions.length,
+					       minHeight: 6,
+				       ),
+			       ],
 		       ),
-	       );
+	       ),
+       );
        }
 }
 

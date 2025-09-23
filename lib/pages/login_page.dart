@@ -23,21 +23,19 @@ class _LoginPageState extends State<LoginPage> {
     if (ok) {
       widget.onLoginSuccess(user);
     } else {
-      setState(() { _error = "Usuario o contraseña incorrectos"; });
+  setState(() { _error = "Usuário ou senha incorretos"; });
     }
     setState(() { _loading = false; });
   }
   @override
   void initState() {
     super.initState();
-    // Sincronizar usuarios locales al iniciar la app
-    syncLocalUsersWithFirestore();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
+      appBar: AppBar(title: const Text("Entrar")),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -52,17 +50,17 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("Iniciar sesión", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        const Text("Iniciar sessão", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 24),
                         TextField(
                           controller: _userController,
-                          decoration: const InputDecoration(labelText: "Usuario"),
+                          decoration: const InputDecoration(labelText: "Usuário"),
                           enabled: !_loading,
                         ),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _passController,
-                          decoration: const InputDecoration(labelText: "Contraseña"),
+                          decoration: const InputDecoration(labelText: "Senha"),
                           obscureText: true,
                           enabled: !_loading,
                         ),

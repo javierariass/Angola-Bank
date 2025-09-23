@@ -10,10 +10,6 @@ dependencies {
   // Import the Firebase BoM
   implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
 
-
-  // TODO: Add the dependencies for Firebase products you want to use
-  // When using the BoM, don't specify versions in Firebase dependencies
-  // https://firebase.google.com/docs/android/setup#available-libraries
 }
 
 android {
@@ -31,9 +27,13 @@ android {
     }
 
     defaultConfig {
+
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        
         applicationId = "com.assertys.koleta"
+
         // Para compatibilidad con Firebase Firestore, minSdk debe ser al menos 23
+
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -42,8 +42,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            
             signingConfig = signingConfigs.getByName("debug")
         }
     }
