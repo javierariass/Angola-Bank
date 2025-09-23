@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../services/firebase_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,31 +32,37 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // 🔹 Texto superior con sombra
+            // 🔹 Texto superior con sombra aplicada a la tipografía (sin contenedor)
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Card(
-                elevation: 8,
-                shadowColor: Colors.black54,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
-                color: Colors.white.withOpacity(0.9),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Text(
-                    "Bem-vindo ao Assertys",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      textStyle: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        letterSpacing: 1.1,
-                      ),
+                child: Text(
+                  "Bem-vindo ao Assertys",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    textStyle: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          Colors
+                              .white, // mantengo el texto visible sobre el fondo oscuro
+                      letterSpacing: 1.1,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black54,
+                          offset: Offset(0, 4),
+                          blurRadius: 8,
+                        ),
+                        Shadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 2),
+                          blurRadius: 2,
+                        ),
+                      ],
                     ),
                   ),
                 ),
