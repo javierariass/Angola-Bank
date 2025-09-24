@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               .white, // mantengo el texto visible sobre el fondo oscuro
                       letterSpacing: 1.1,
                       shadows: [
-                        Shadow(
+                        Shadow(4
                           color: Colors.black54,
                           offset: Offset(0, 4),
                           blurRadius: 8,
