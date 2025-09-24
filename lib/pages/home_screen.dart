@@ -28,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
         (MediaQuery.of(context).size.width * devicePixelRatio).round();
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 30, 73, 27),
       body: SafeArea(
         child: Column(
           children: [
@@ -48,11 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
                       color:
-                          Colors
-                              .white, // mantengo el texto visible sobre el fondo oscuro
+                          Color.fromARGB(255, 44, 15, 15), // mantengo el texto visible sobre el fondo oscuro
                       letterSpacing: 1.1,
                       shadows: [
-                        Shadow(4
+                        Shadow(
                           color: Colors.black54,
                           offset: Offset(0, 4),
                           blurRadius: 8,
@@ -75,10 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(0),
                     child: Image.asset(
                       "assets/fondo.png",
-                      fit: BoxFit.contain,
+                      fit: BoxFit.cover,
                       cacheWidth: targetWidth,
                       semanticLabel: "Logo de Assertys",
                     ),
