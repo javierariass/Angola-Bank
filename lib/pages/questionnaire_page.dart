@@ -363,9 +363,7 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.lightBlueAccent,
                         foregroundColor: Colors.white,
-                        overlayColor: MaterialStateProperty.all(
-                          Colors.blue.withOpacity(0.2),
-                        ),
+                        overlayColor: Colors.blue.withOpacity(0.2),
                       ),
                       onPressed: () {
                         _pageController.previousPage(
@@ -381,9 +379,7 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.lightBlueAccent,
                         foregroundColor: Colors.white,
-                        overlayColor: MaterialStateProperty.all(
-                          Colors.blue.withOpacity(0.2),
-                        ),
+                        overlayColor: Colors.blue.withOpacity(0.2),
                       ),
                       onPressed:
                           _isCurrentAnswered()
@@ -402,9 +398,12 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.lightBlueAccent,
                         foregroundColor: Colors.white,
-                        overlayColor: MaterialStateProperty.all(
-                          const Color.fromRGBO(33, 243, 89, 1).withOpacity(0.2),
-                        ),
+                        overlayColor: const Color.fromRGBO(
+                          33,
+                          243,
+                          89,
+                          1,
+                        ).withOpacity(0.2),
                       ),
                       onPressed: () {
                         final missing = _missingQuestions();
