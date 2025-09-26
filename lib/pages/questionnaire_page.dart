@@ -67,7 +67,7 @@ class _LinesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint =
         Paint()
-          ..color = Colors.blueAccent.withOpacity(
+          ..color = Color.fromRGBO(105, 209, 197, 1.0).withOpacity(
             0.1,
           ) // <-- Cambiar color aquí si quieres
           ..strokeWidth = 1.5;
@@ -214,18 +214,216 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
   }
 
   List<String> _missingQuestions() {
-    // Tu código original de validación de respuestas
-    return [];
+    final missing = <String>[];
+    final pages = _questionnairePages;
+    for (var i = 0; i < pages.length; i++) {
+      final page = pages[i];
+      String id;
+      String label;
+      if (page is AdvancedQuestion) {
+        id = page.id;
+        label = page.question;
+        final val = answers[id];
+        if (page.type == QuestionType.text) {
+          if (val == null || val.toString().isEmpty) missing.add('P${i + 1}: $label');
+        } else if (page.type == QuestionType.multipleChoice) {
+          if (val == null || (val is List && val.isEmpty)) missing.add('P${i + 1}: $label');
+        } else if (page.type == QuestionType.singleChoice) {
+          if (val == null) missing.add('P${i + 1}: $label');
+        } else if (page.type == QuestionType.scale) {
+          if (val == null) missing.add('P${i + 1}: $label');
+        }
+      } else if (page is Map && page['type'] == 'sentiment') {
+        final keyPos = '${page['id']}_${page['banco']}_positivo';
+        final keyNeg = '${page['id']}_${page['banco']}_negativo';
+        final keyTxt = '${page['id']}_${page['banco']}_texto';
+        if (answers[keyPos] == null) missing.add('P${i + 1}: Sentimento positivo para ${page['banco']}');
+        if (answers[keyNeg] == null) missing.add('P${i + 1}: Sentimento negativo para ${page['banco']}');
+        if (answers[keyTxt] == null || answers[keyTxt].toString().isEmpty) missing.add('P${i + 1}: Explicação do sentimento para ${page['banco']}');
+      } else if (page is Map) {
+        final key = '${page['id']}_${page['banco']}';
+        label = page['question'];
+        if (page['type'] == QuestionType.text) {
+          if (answers[key] == null || answers[key].toString().isEmpty) missing.add('P${i + 1}: $label');
+        } else if (page['type'] == QuestionType.multipleChoice) {
+          if (answers[key] == null || (answers[key] is List && (answers[key] as List).isEmpty)) missing.add('P${i + 1}: $label');
+        } else if (page['type'] == QuestionType.scale) {
+          if (answers[key] == null) missing.add('P${i + 1}: $label');
+        }
+      }
+    }
+    return missing;
   }
 
   Map<String, dynamic> _formatAnswersForRow() {
-    // Tu código original para formatear respuestas
-    return {};
+    final Map<String, dynamic> row = {};
+    // Preguntas generales (no por banco)
+    for (final q in advancedQuestions) {
+      // Solo las preguntas que no son dinámicas por banco
+      if (["q09", "q10", "q12", "q13", "q14"].contains(q.id)) continue;
+      final val = answers[q.id];
+      if (val == null || (q.type == QuestionType.text && val.toString().isEmpty)) continue;
+      if (q.type == QuestionType.multipleChoice) {
+        // Guardar índices o textos según prefieras; aquí guardamos índices
+        row[q.id] = val;
+        if (q.allowOther && val is List && val.contains(q.options.length - 1)) {
+          final outroText = answers['${q.id}_Outro'];
+          if (outroText != null && outroText.toString().isNotEmpty) {
+            row['${q.id}_Outro'] = outroText;
+          }
+        }
+      } else if (q.type == QuestionType.singleChoice) {
+        row[q.id] = val;
+        if (q.allowOther && val == q.options.length - 1) {
+          final outroText = answers['${q.id}_Outro'];
+          if (outroText != null && outroText.toString().isNotEmpty) {
+            row['${q.id}_Outro'] = outroText;
+          }
+        }
+      } else if (q.type == QuestionType.scale) {
+        row[q.id] = val;
+      } else if (q.type == QuestionType.text) {
+        row[q.id] = val;
+      }
+    }
+
+    // Bancos seleccionados en q2
+    final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
+    final q2val = answers['q02'];
+    List<int> indices = (q2val is List) ? q2val.cast<int>() : <int>[];
+    List<String> bancosQ2 = [];
+    for (var i in indices) {
+      if (i >= 0 && i < q2.options.length) {
+        if (i == q2.options.length - 1) {
+          final outroText = answers['q02_Outro'];
+          if (outroText != null && outroText.toString().trim().isNotEmpty) {
+            bancosQ2.add(outroText.toString().trim());
+          }
+        } else {
+          bancosQ2.add(q2.options[i]);
+        }
+      }
+    }
+
+    // Preguntas dinámicas agrupadas por banco
+    final Map<String, dynamic> bancos = {};
+    for (final banco in bancosQ2) {
+      final Map<String, dynamic> bancoAnswers = {};
+      // q09
+      final key09 = 'q09_$banco';
+      final val09 = answers[key09];
+      bancoAnswers['q09'] = val09 ?? [];
+      // q10
+      final key10 = 'q10_$banco';
+      final val10 = answers[key10];
+      bancoAnswers['q10'] = val10 ?? [];
+      // q12 (sentiment)
+      final key12pos = 'q12_${banco}_positivo';
+      final key12neg = 'q12_${banco}_negativo';
+      final key12txt = 'q12_${banco}_texto';
+      bancoAnswers['q12'] = {
+        'positivo': answers[key12pos] ?? 0,
+        'negativo': answers[key12neg] ?? 0,
+        'texto': answers[key12txt] ?? '',
+      };
+      // q13
+      final key13 = 'q13_$banco';
+      bancoAnswers['q13'] = answers[key13] ?? 0;
+      // q14
+      final key14 = 'q14_$banco';
+      bancoAnswers['q14'] = answers[key14] ?? '';
+      bancos[banco] = bancoAnswers;
+    }
+    row['bancos'] = bancos;
+    return row;
+  }
+
+  List<Map<String, dynamic>> get _dynamicBankPages {
+    // Get bancos seleccionados en Q2
+    final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
+    final q2val = answers['q02'];
+    List<int> indices = (q2val is List) ? q2val.cast<int>() : <int>[];
+    List<String> bancosQ2 = [];
+    for (var i in indices) {
+      if (i >= 0 && i < q2.options.length) {
+        if (i == q2.options.length - 1) {
+          final outroText = answers['q02_Outro'];
+          if (outroText != null && outroText.toString().trim().isNotEmpty) {
+            bancosQ2.add(outroText.toString().trim());
+          }
+        } else {
+          bancosQ2.add(q2.options[i]);
+        }
+      }
+    }
+
+    // Para cada banco, crear las preguntas 9, 10, 12, 13, 14
+    List<Map<String, dynamic>> pages = [];
+    for (final banco in bancosQ2) {
+      pages.add({
+        'id': 'q09',
+        'banco': banco,
+        'type': QuestionType.multipleChoice,
+        'options': advancedQuestions.firstWhere((q) => q.id == 'q09').options,
+        'question': 'Que serviços utiliza em "$banco"?'
+      });
+      pages.add({
+        'id': 'q10',
+        'banco': banco,
+        'type': QuestionType.multipleChoice,
+        'options': advancedQuestions.firstWhere((q) => q.id == 'q10').options,
+        'question': 'Que produtos utiliza em "$banco"?'
+      });
+      pages.add({
+        'id': 'q12',
+        'banco': banco,
+        'type': 'sentiment', // tipo especial para dos sliders y texto
+        'question': 'Análise de sentimento positivo ou negativo para "$banco"? Por quê?'
+      });
+      pages.add({
+        'id': 'q13',
+        'banco': banco,
+        'type': QuestionType.scale,
+        'scaleMin': 0,
+        'scaleMax': 10,
+        'question': 'Em uma escala de 0 a 10, qual é a probabilidade de recomendar "$banco" a um amigo ou colega?'
+      });
+      pages.add({
+        'id': 'q14',
+        'banco': banco,
+        'type': QuestionType.text,
+        'question': 'Qual a principal razão desta recomendação para "$banco"?'
+      });
+    }
+    return pages;
   }
 
   List<dynamic> get _questionnairePages {
     // Tu código original que construye las páginas incluyendo dinámicas por banco
-    return advancedQuestions;
+    // Construir explícitamente las preguntas fijas en el orden correcto
+    // Queremos: q01..q08, luego las preguntas dinámicas por banco (q09,q10,q12,q13,q14),
+    // luego q11, y finalmente q15..q19 (manteniendo las preguntas fijas originales).
+    final pages = <dynamic>[];
+
+    // Añadir q01..q08 (índices 0..7)
+    for (var i = 0; i <= 7 && i < advancedQuestions.length; i++) {
+      pages.add(advancedQuestions[i]);
+    }
+
+    // Insertar las páginas dinámicas por banco aquí
+    pages.insertAll(pages.length, _dynamicBankPages);
+
+    // Añadir q11 (índice 10 en advancedQuestions)
+    if (advancedQuestions.length > 10) {
+      pages.add(advancedQuestions[10]);
+    }
+
+    // Añadir q15..q19 (índices 14..18) si existen
+    for (var i = 14; i < advancedQuestions.length; i++) {
+      pages.add(advancedQuestions[i]);
+    }
+
+    return pages;
   }
 
   // ------------------ Build adaptado ------------------
@@ -259,16 +457,81 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
 
                     // ------------------ AdvancedQuestionWidget completo ------------------
                     if (page is AdvancedQuestion) {
-                      questionWidget = AdvancedQuestionWidget(
-                        question: page,
-                        answer: answers[page.id],
-                        onChanged: (val) {
-                          setState(() {
-                            answers[page.id] = val;
-                          });
-                        },
-                        answers: answers,
-                      );
+                      // Q03 debe poblarse dinámicamente con los bancos seleccionados en Q02
+                      if (page.id == 'q03') {
+                        final q2 = advancedQuestions.firstWhere((q) => q.id == 'q02', orElse: () => AdvancedQuestion(id: '', question: '', type: QuestionType.singleChoice));
+                        final q2val = answers['q02'];
+                        List<int> indices = (q2val is List) ? q2val.cast<int>() : <int>[];
+                        List<String> bancosQ2 = [];
+                        final seen = <String>{};
+                        for (var i in indices) {
+                          if (i >= 0 && i < q2.options.length) {
+                            String candidate;
+                            if (i == q2.options.length - 1) {
+                              final outroText = answers['q02_Outro'];
+                              if (outroText == null || outroText.toString().trim().isEmpty) continue;
+                              candidate = outroText.toString().trim();
+                            } else {
+                              candidate = q2.options[i];
+                            }
+                            if (!seen.contains(candidate)) {
+                              seen.add(candidate);
+                              bancosQ2.add(candidate);
+                            }
+                          }
+                        }
+                        if (bancosQ2.isEmpty) {
+                          // No hay bancos seleccionados todavía: mostrar instrucción y botón para volver a Q02
+                          questionWidget = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(page.question, style: const TextStyle(fontSize: 18)),
+                              const SizedBox(height: 12),
+                              const Text('No ha seleccionado ningún banco en la pregunta 2. Por favor, marque al menos un banco o use "Outro".'),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  // Ir hacia atrás hasta Q02 (índice 1 en pages fijas)
+                                  // Calculamos la posición de Q02 en el PageView: está en la lista fija en la posición 1
+                                  _pageController.animateToPage(1, duration: const Duration(milliseconds: 200), curve: Curves.easeInOut);
+                                },
+                                icon: const Icon(Icons.arrow_back),
+                                label: const Text('Volver a la pregunta 2'),
+                              ),
+                            ],
+                          );
+                        } else {
+                          final dynamicQuestion = AdvancedQuestion(
+                            id: page.id,
+                            question: page.question,
+                            type: page.type,
+                            options: bancosQ2,
+                            // No permitir 'Outro' aquí: los nombres ya vienen de q02 (incluyendo texto escrito)
+                            allowOther: false,
+                          );
+                          questionWidget = AdvancedQuestionWidget(
+                            question: dynamicQuestion,
+                            answer: answers[page.id],
+                            onChanged: (val) {
+                              setState(() {
+                                answers[page.id] = val;
+                              });
+                            },
+                            answers: answers,
+                          );
+                        }
+                      } else {
+                        questionWidget = AdvancedQuestionWidget(
+                          question: page,
+                          answer: answers[page.id],
+                          onChanged: (val) {
+                            setState(() {
+                              answers[page.id] = val;
+                            });
+                          },
+                          answers: answers,
+                        );
+                      }
                     } else if (page is Map && page['type'] == 'sentiment') {
                       final keyPos = '${page['id']}_${page['banco']}_positivo';
                       final keyNeg = '${page['id']}_${page['banco']}_negativo';
@@ -361,9 +624,9 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                   if (_currentPage > 0)
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightBlueAccent,
+                        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
                         foregroundColor: Colors.white,
-                        overlayColor: Colors.blue.withOpacity(0.2),
+                        overlayColor: const Color.fromRGBO(105,209,197,1.0),
                       ),
                       onPressed: () {
                         _pageController.previousPage(
@@ -377,9 +640,9 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                   if (_currentPage < totalPages - 1)
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightBlueAccent,
+                        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
                         foregroundColor: Colors.white,
-                        overlayColor: Colors.blue.withOpacity(0.2),
+                        overlayColor: Color.fromRGBO(105, 209, 197, 1.0),
                       ),
                       onPressed:
                           _isCurrentAnswered()
@@ -396,14 +659,10 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                   if (_currentPage == totalPages - 1)
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightBlueAccent,
+                        backgroundColor:  const Color.fromRGBO(105,209,197,1.0),
                         foregroundColor: Colors.white,
-                        overlayColor: const Color.fromRGBO(
-                          33,
-                          243,
-                          89,
-                          1,
-                        ).withOpacity(0.2),
+                        overlayColor: const Color.fromRGBO(105,209,197,1.0),
+                         
                       ),
                       onPressed: () {
                         final missing = _missingQuestions();
@@ -493,7 +752,7 @@ class _AdvancedQuestionWidgetState extends State<AdvancedQuestionWidget> {
                 title: const Text('Outro (especificar)'),
                 subtitle: TextField(
                   onChanged: (val) {
-                    widget.onChanged({'outro': val});
+                    // Guardar solo el texto en la clave qXX_Outro para no sobrescribir la respuesta principal
                     final key = '${q.id}_Outro';
                     widget.answers[key] = val;
                   },
@@ -529,7 +788,7 @@ class _AdvancedQuestionWidgetState extends State<AdvancedQuestionWidget> {
                 title: const Text('Outro (especificar)'),
                 subtitle: TextField(
                   onChanged: (val) {
-                    widget.onChanged({'outro': val});
+                    // Guardar solo el texto en la clave qXX_Outro
                     final key = '${q.id}_Outro';
                     widget.answers[key] = val;
                   },
