@@ -1,4 +1,3 @@
-// ignore_for_file: use_build_, use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,12 +12,76 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  late AnimationController _titleController;
+  late AnimationController _buttonController;
+  late AnimationController _logoController;
+
+  late Animation<Offset> _titleOffset;
+  late Animation<Offset> _buttonOffset;
+  late Animation<double> _titleOpacity;
+  late Animation<double> _buttonOpacity;
+  late Animation<double> _logoScale;
+
+  bool _loading = false;
+
   @override
   void initState() {
     super.initState();
-    // Ocultar status bar y navigation bar en modo inmersivo
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    // Animación del título
+    _titleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _titleOffset = Tween<Offset>(
+      begin: const Offset(0, -0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _titleController, curve: Curves.easeOut));
+    _titleOpacity = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _titleController, curve: Curves.easeIn));
+
+    // Animación del botón
+    _buttonController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _buttonOffset = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _buttonController, curve: Curves.easeOut),
+    );
+    _buttonOpacity = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _buttonController, curve: Curves.easeIn));
+
+    // Animación del logo central (zoom/parallax suave)
+    _logoController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+    _logoScale = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeInOut),
+    );
+
+    // Iniciar animaciones
+    _titleController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _buttonController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _buttonController.dispose();
+    _logoController.dispose();
+    super.dispose();
   }
 
   @override
@@ -28,123 +91,135 @@ class _HomeScreenState extends State<HomeScreen> {
         (MediaQuery.of(context).size.width * devicePixelRatio).round();
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 🔹 Texto superior con sombra aplicada a la tipografía (sin contenedor)
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                child: Text(
-                  "Bem-vindo ao Assertys",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    textStyle: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          Color.fromARGB(255, 44, 15, 15), // mantengo el texto visible sobre el fondo oscuro
-                      letterSpacing: 1.1,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black54,
-                          offset: Offset(0, 4),
-                          blurRadius: 8,
-                        ),
-                        Shadow(
-                          color: Colors.black26,
-                          offset: Offset(0, 2),
-                          blurRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fondo
+          Image.asset("assets/fondo.png", fit: BoxFit.cover),
+          Container(color: Colors.black.withOpacity(0.4)),
 
-            // 🔹 Logo central libre
-            Expanded(
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(0),
-                    child: Image.asset(
-                      "assets/fondo.png",
-                      fit: BoxFit.cover,
-                      cacheWidth: targetWidth,
-                      semanticLabel: "Logo de Assertys",
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // 🔹 Botón inferior con margen
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: FractionallySizedBox(
-                widthFactor: 0.7,
-                child: SizedBox(
-                  height: 60,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 245, 247, 245),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 6,
-                      shadowColor: Colors.black45,
-                    ),
-                    onPressed: () async {
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder:
-                            (_) => WillPopScope(
-                              onWillPop: () async => false,
-                              child: const Center(
-                                child: CircularProgressIndicator(),
+          SafeArea(
+            child: Column(
+              children: [
+                // Texto superior animado
+                SlideTransition(
+                  position: _titleOffset,
+                  child: FadeTransition(
+                    opacity: _titleOpacity,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        "Bem-vindo ao Assertys",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          textStyle: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 1.1,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black54,
+                                offset: Offset(0, 3),
+                                blurRadius: 6,
                               ),
-                            ),
-                      );
-                      try {
-                        await syncLocalUsersWithFirestore();
-                      } catch (e, st) {
-                        debugPrint("Error en sincronización: $e\n$st");
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Error ao sincronizar os dados."),
-                            ),
-                          );
-                        }
-                      } finally {
-                        if (mounted) Navigator.of(context).pop();
-                      }
-                      widget.onNext?.call();
-                    },
-                    child: const Text(
-                      "Próximo",
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                        color: Colors.black87,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+
+                // Logo central con zoom animado
+                Expanded(
+                  child: Center(
+                    child: ScaleTransition(
+                      scale: _logoScale,
+                      child: Image.asset(
+                        "assets/fondo.png", // aquí debería ser tu logo si lo tienes separado
+                        fit: BoxFit.contain,
+                        cacheWidth: targetWidth,
+                        semanticLabel: "Logo de Assertys",
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Botón inferior animado
+                SlideTransition(
+                  position: _buttonOffset,
+                  child: FadeTransition(
+                    opacity: _buttonOpacity,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: FractionallySizedBox(
+                        widthFactor: 0.7,
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.07,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 6,
+                              shadowColor: Colors.black45,
+                            ),
+                            onPressed:
+                                _loading
+                                    ? null
+                                    : () async {
+                                      setState(() => _loading = true);
+
+                                      try {
+                                        await syncLocalUsersWithFirestore();
+                                        widget.onNext?.call();
+                                      } catch (e, st) {
+                                        debugPrint(
+                                          "Error en sincronización: $e\n$st",
+                                        );
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                "Error ao sincronizar os dados.",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() => _loading = false);
+                                        }
+                                      }
+                                    },
+                            child:
+                                _loading
+                                    ? const CircularProgressIndicator(
+                                      color: Colors.black,
+                                    )
+                                    : const Text(
+                                      "Próximo",
+                                      style: TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.2,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
