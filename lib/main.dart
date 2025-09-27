@@ -70,6 +70,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 });
               },
             ),
+            
           if (_showLogin)
             LoginPage(
               onLoginSuccess: (username) {
