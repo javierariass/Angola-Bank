@@ -25,7 +25,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20),
+      duration: const Duration(seconds: 30),
     )..repeat();
     _generateLines();
   }
@@ -70,7 +70,7 @@ class _LinesPainter extends CustomPainter {
           ..color = Colors.blueAccent.withOpacity(
             0.1,
           ) // <-- Cambiar color aquí si quieres
-          ..strokeWidth = 1.5;
+          ..strokeWidth = 5.0;
 
     for (var i = 0; i < lines.length; i++) {
       final start = Offset(

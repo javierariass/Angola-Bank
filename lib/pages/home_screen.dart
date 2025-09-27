@@ -61,13 +61,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     ).animate(CurvedAnimation(parent: _buttonController, curve: Curves.easeIn));
 
     // Animación del logo central (zoom/parallax suave)
-    _logoController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 6),
-    )..repeat(reverse: true);
-    _logoScale = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _logoController, curve: Curves.easeInOut),
-    );
+    //_logoController = AnimationController(
+    // vsync: this,
+    //  duration: const Duration(seconds: 6),
+    //)..repeat(reverse: true);
+    //_logoScale = Tween<double>(begin: 1.0, end: 1.05).animate(
+    // CurvedAnimation(parent: _logoController, curve: Curves.easeInOut),
+    //);
 
     // Iniciar animaciones
     _titleController.forward();
@@ -126,21 +126,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Logo central con zoom animado
-                Expanded(
-                  child: Center(
-                    child: ScaleTransition(
-                      scale: _logoScale,
-                      child: Image.asset(
-                        "assets/fondo.png", // aquí debería ser tu logo si lo tienes separado
-                        fit: BoxFit.contain,
-                        cacheWidth: targetWidth,
-                        semanticLabel: "Logo de Assertys",
                       ),
                     ),
                   ),
