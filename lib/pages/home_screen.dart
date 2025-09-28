@@ -15,13 +15,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _titleController;
   late AnimationController _buttonController;
-  late AnimationController _logoController;
 
   late Animation<Offset> _titleOffset;
   late Animation<Offset> _buttonOffset;
   late Animation<double> _titleOpacity;
   late Animation<double> _buttonOpacity;
-  late Animation<double> _logoScale;
 
   bool _loading = false;
 
@@ -80,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _titleController.dispose();
     _buttonController.dispose();
-    _logoController.dispose();
     super.dispose();
   }
 
