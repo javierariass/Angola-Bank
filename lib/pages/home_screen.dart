@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-
+                SizedBox(height: MediaQuery.of(context).size.height * 0.70),
                 // Botón inferior animado
                 SlideTransition(
                   position: _buttonOffset,
