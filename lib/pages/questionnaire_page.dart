@@ -550,10 +550,10 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
     final totalPages = _questionnairePages.length;
     return AnimatedBackground(
       child: Scaffold(
-        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+        backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
         appBar: AppBar(
-          backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           title: const Text('Questionário Bancário'),
           centerTitle: true,
@@ -786,6 +786,7 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+                        foregroundColor: Colors.white,
                       ),
                       onPressed: () {
                         _pageController.previousPage(
@@ -800,6 +801,7 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+                        foregroundColor: Colors.white,
                       ),
                       onPressed:
                           _isCurrentAnswered()
@@ -849,6 +851,16 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: (_currentPage + 1) / totalPages,
+                // color que interpola entre morado y blanco según el progreso (0..1)
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Color.lerp(
+                        Color.fromARGB(255, 255, 255, 255),
+                        Color.fromRGBO(105, 209, 197, 1.0),
+                        (_currentPage + 1) / totalPages,
+                      ) ??
+                      Color.fromARGB(255, 244, 244, 244),
+                ),
+                backgroundColor: Colors.white70,
                 minHeight: 6,
               ),
             ],
@@ -907,6 +919,7 @@ class _AdvancedQuestionWidgetState extends State<AdvancedQuestionWidget> {
             if (q.options.isNotEmpty)
               ...List.generate(q.options.length, (i) {
                 return RadioListTile<int>(
+                  activeColor: Color.fromRGBO(105, 209, 197, 1.0),
                   title: Text(q.options[i]),
                   value: i,
                   groupValue: _localAnswer,
@@ -923,6 +936,13 @@ class _AdvancedQuestionWidgetState extends State<AdvancedQuestionWidget> {
               ListTile(
                 title: const Text('Outro (especificar)'),
                 subtitle: TextField(
+                  cursorColor: Color.fromRGBO(
+                    105,
+                    209,
+                    197,
+                    1.0,
+                  ), // <- color del cursor/selección
+                  decoration: const InputDecoration(),
                   onChanged: (val) {
                     widget.onChanged({'outro': val});
                     // Guardar el texto en answers['qXX_Outro']

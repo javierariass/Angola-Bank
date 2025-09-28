@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../services/firebase_service.dart';
+import 'questionnaire_page.dart';
 
 class LoginPage extends StatefulWidget {
   final Function(String username) onLoginSuccess;
@@ -16,17 +18,25 @@ class _LoginPageState extends State<LoginPage> {
   String? _error;
 
   void _login() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     final user = _userController.text.trim();
     final pass = _passController.text;
     final ok = await validateLocalUserLogin(user, pass);
     if (ok) {
       widget.onLoginSuccess(user);
     } else {
-  setState(() { _error = "Usuário ou senha incorretos"; });
+      setState(() {
+        _error = "Usuário ou senha incorretos";
+      });
     }
-    setState(() { _loading = false; });
+    setState(() {
+      _loading = false;
+    });
   }
+
   @override
   void initState() {
     super.initState();
@@ -34,44 +44,55 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Entrar")),
-      resizeToAvoidBottomInset: true,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
-          child: Card(
-            elevation: 8,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Iniciar sessão", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 24),
-                  TextField(
-                    controller: _userController,
-                    decoration: const InputDecoration(labelText: "Usuário"),
-                    enabled: !_loading,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _passController,
-                    decoration: const InputDecoration(labelText: "Senha"),
-                    obscureText: true,
-                    enabled: !_loading,
-                  ),
-                  const SizedBox(height: 24),
-                  if (_error != null)
-                    Text(_error!, style: const TextStyle(color: Colors.red)),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _login,
-                      child: _loading ? const CircularProgressIndicator() : const Text("Entrar"),
+    return AnimatedBackground(
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Entrar")),
+        resizeToAvoidBottomInset: true,
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
+            child: Card(
+              elevation: 8,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Iniciar sessão",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: _userController,
+                      decoration: const InputDecoration(labelText: "Usuário"),
+                      enabled: !_loading,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _passController,
+                      decoration: const InputDecoration(labelText: "Senha"),
+                      obscureText: true,
+                      enabled: !_loading,
+                    ),
+                    const SizedBox(height: 24),
+                    if (_error != null)
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _login,
+                        child:
+                            _loading
+                                ? const CircularProgressIndicator()
+                                : const Text("Entrar"),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

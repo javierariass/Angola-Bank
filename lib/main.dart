@@ -1,12 +1,13 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'pages/home_screen.dart';
-import 'pages/questionnaire_page.dart';
-import 'pages/login_page.dart';
-import 'services/firebase_service.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'pages/home_screen.dart';
+import 'pages/login_page.dart';
+import 'pages/questionnaire_page.dart';
+import 'services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +59,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-  title: 'Questionário Bancário',
+      title: 'Questionário Bancário',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromRGBO(105, 209, 197, 1.0),
+        ),
+      ),
       home: Stack(
         children: [
           if (_showHome)
@@ -70,7 +76,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 });
               },
             ),
-            
+
           if (_showLogin)
             LoginPage(
               onLoginSuccess: (username) {
@@ -91,30 +97,29 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               },
             ),
           if (!_showLogin && !_showHome && _loggedUser.isNotEmpty)
-            AppHomeWrapper(
-              onLogout: _handleLogout,
-              loggedUser: _loggedUser,
-            ),
+            AppHomeWrapper(onLogout: _handleLogout, loggedUser: _loggedUser),
         ],
       ),
       routes: {
-        '/app_home': (context) => AppHomeWrapper(
-          onLogout: _handleLogout,
-          loggedUser: _loggedUser,
-        ),
-        '/questionnaire': (context) => QuestionnairePage(
-          loggedUser: _loggedUser,
-          sessionQuizCount: _sessionQuizCount,
-          onSessionQuizCountChanged: (newCount) {
-            setState(() {
-              _sessionQuizCount = newCount;
-            });
-            // Actualizar el contador en el documento de sesión actual
-            if (_loggedUser.isNotEmpty && _sessionDocCreated) {
-              updateCurrentSessionQuizCount(_loggedUser, newCount);
-            }
-          },
-        ),
+        '/app_home':
+            (context) => AppHomeWrapper(
+              onLogout: _handleLogout,
+              loggedUser: _loggedUser,
+            ),
+        '/questionnaire':
+            (context) => QuestionnairePage(
+              loggedUser: _loggedUser,
+              sessionQuizCount: _sessionQuizCount,
+              onSessionQuizCountChanged: (newCount) {
+                setState(() {
+                  _sessionQuizCount = newCount;
+                });
+                // Actualizar el contador en el documento de sesión actual
+                if (_loggedUser.isNotEmpty && _sessionDocCreated) {
+                  updateCurrentSessionQuizCount(_loggedUser, newCount);
+                }
+              },
+            ),
       },
     );
   }
@@ -123,7 +128,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 class AppHomeWrapper extends StatelessWidget {
   final Future<void> Function() onLogout;
   final String loggedUser;
-  const AppHomeWrapper({super.key, required this.onLogout, required this.loggedUser});
+  const AppHomeWrapper({
+    super.key,
+    required this.onLogout,
+    required this.loggedUser,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +146,10 @@ class AppHomeWrapper extends StatelessWidget {
                 children: [
                   const Text('Opções', style: TextStyle(fontSize: 20)),
                   const SizedBox(height: 8),
-                  Text('Usuário: $loggedUser', style: const TextStyle(fontSize: 16)),
+                  Text(
+                    'Usuário: $loggedUser',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ],
               ),
             ),
@@ -159,7 +171,13 @@ class AppHomeWrapper extends StatelessWidget {
                   await prefs.remove('pending_results');
                 }
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(ok ? 'Sincronização completa! Dados locais eliminados e usuários atualizados.' : 'Alguns dados não foram sincronizados.')),
+                  SnackBar(
+                    content: Text(
+                      ok
+                          ? 'Sincronização completa! Dados locais eliminados e usuários atualizados.'
+                          : 'Alguns dados não foram sincronizados.',
+                    ),
+                  ),
                 );
               },
             ),
@@ -186,9 +204,7 @@ class AppHomeWrapper extends StatelessWidget {
           ],
         ),
       ),
-      appBar: AppBar(
-  title: const Text('Questionário Bancário'),
-      ),
+      appBar: AppBar(title: const Text('Questionário Bancário')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
