@@ -65,12 +65,21 @@ class _LinesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = const Color.fromRGBO(105, 209, 197, 1.0).withOpacity(0.1)
-          ..strokeWidth = 5.5;
+    // Paint a solid white background so the animated area is white
+    final bgPaint = Paint()..color = Colors.white;
+    canvas.drawRect(Offset.zero & size, bgPaint);
 
+    // Draw subtle green lines on top of the white background
+    final lineBase =
+        Color.fromRGBO(105, 209, 197, 1.0) ??
+        const Color.fromRGBO(105, 209, 197, 1.0);
     for (var i = 0; i < lines.length; i++) {
+      final paint =
+          Paint()
+            ..color = lineBase.withOpacity(0.1)
+            ..strokeWidth = 7.0
+            ..strokeCap = StrokeCap.round;
+
       final start = Offset(
         (lines[i].dx + progress * 0.5) % 1 * size.width,
         (lines[i].dy + progress * 0.5) % 1 * size.height,
@@ -541,7 +550,11 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
     final totalPages = _questionnairePages.length;
     return AnimatedBackground(
       child: Scaffold(
+        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
+          backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+          elevation: 0,
           title: const Text('Questionário Bancário'),
           centerTitle: true,
         ),
@@ -719,29 +732,48 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                     } else {
                       questionWidget = const SizedBox.shrink();
                     }
-                    return SingleChildScrollView(
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
-                        elevation: 4,
-                        child: Padding(
-                          padding: const EdgeInsets.all(18),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                'Pergunta ${index + 1} de $totalPages',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Reserve some space for controls below the card
+                        final maxCardHeight = constraints.maxHeight * 0.78;
+                        return Center(
+                          child: Card(
+                            color: Colors.white.withOpacity(0.92),
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            elevation: 4,
+                            child: SizedBox(
+                              width: double.infinity,
+                              // Limit the card height and allow internal scrolling
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxHeight: maxCardHeight,
                                 ),
-                                textAlign: TextAlign.right,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(18),
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Text(
+                                          'Pergunta ${index + 1} de $totalPages',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                        ),
+                                        const SizedBox(height: 10),
+                                        questionWidget,
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                              const SizedBox(height: 10),
-                              questionWidget,
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -752,6 +784,9 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                 children: [
                   if (_currentPage > 0)
                     ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+                      ),
                       onPressed: () {
                         _pageController.previousPage(
                           duration: const Duration(milliseconds: 180),
@@ -763,6 +798,9 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                     ),
                   if (_currentPage < totalPages - 1)
                     ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+                      ),
                       onPressed:
                           _isCurrentAnswered()
                               ? () {
@@ -777,6 +815,9 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
                     ),
                   if (_currentPage == totalPages - 1)
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromRGBO(105, 209, 197, 1.0),
+                      ),
                       onPressed: () {
                         final missing = _missingQuestions();
                         if (missing.isEmpty) {
