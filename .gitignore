@@ -57,3 +57,5 @@ linux/build/
 .env
 .env.*
 .flutter-plugins-dependencies
+.flutter-plugins
+.flutter-plugins-dependencies
